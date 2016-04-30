@@ -48,7 +48,7 @@ namespace Web_Crawler
         {
             
             _urls.Push(target);
-            while (_urls.Count > 0)
+            while (_urls.Count > 0 || _tasks.Count > 0)
             {
                 while (taskCount < _maxConcurrency && _urls.Count > 0)
                 {
@@ -56,8 +56,13 @@ namespace Web_Crawler
                 }
 
                 Task<string> t = await Task.WhenAny(_tasks);
-                string result = await t;
-                getLinks(result, target);                
+
+                var completed = _tasks.Where(x => x.Status == TaskStatus.RanToCompletion).ToList();
+                foreach (var task in completed)
+                {
+                    getLinks(task.Result, target);
+                    _tasks.Remove(task);
+                }
             }
 
             //var key = Console.ReadKey().Key;
